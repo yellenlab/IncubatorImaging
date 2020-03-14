@@ -12,6 +12,11 @@
 
 #define STEPS_PER_MM 10
 
+#define XY_SPEED 800
+#define XY_ACCEL 400
+#define Z_SPEED  400
+#define Z_ACCEL  200
+
 AccelStepper stepperX(1, 3, 2);
 AccelStepper stepperY(1, 5, 4);
 AccelStepper stepperZ(1, 7, 6);
@@ -31,7 +36,9 @@ void setup() {
   pinMode(LIMIT_Y, INPUT_PULLUP);
   pinMode(LIMIT_Z, INPUT_PULLUP);
 
-  setSpeedandAcceleration(800, 400);
+  setSpeedandAcceleration(stepperX, XY_SPEED, XY_ACCEL);
+  setSpeedandAcceleration(stepperY, XY_SPEED, XY_ACCEL);
+  setSpeedandAcceleration(stepperZ, Z_SPEED, Z_ACCEL);
 
   // Then give them to MultiStepper to manage
   steppers.addStepper(stepperX);
@@ -44,7 +51,8 @@ void setup() {
  * appropriate functions.
  * 
  * Possible commands are:
- * move <x> <y> <z>
+ * moveXY <x> <y>
+ * moveZ <z>
  * get x 
  * get y 
  * get z 
@@ -67,17 +75,15 @@ void loop() {
   char *command = strtok(readIn, " ");
   char *param1 = strtok(NULL, " ");
   char *param2 = strtok(NULL, " ");
-  char *param3 = strtok(NULL, " ");
 
-  if (strcmp(command, "move") == 0) {
-    setXYZ(atof(param1), atof(param2), atof(param3));
+  if (strcmp(command, "moveXY") == 0) {
+    setXY(atof(param1), atof(param2));
+  } else if (strcmp(command, "moveZ" == 0) {
+    setZ(atof(param1));
   } else if(strcmp(command, "get") == 0) {
-    if (strcmp(param1, "x") == 0)
-        Serial.println(current_positions[0] / STEPS_PER_MM);
-    else if (strcmp(param1, "y") == 0)
-        Serial.println(current_positions[1] / STEPS_PER_MM);
-    else if (strcmp(param1, "z") == 0)
-        Serial.println(current_positions[2] / STEPS_PER_MM);
+         if (strcmp(param1, "x") == 0)    Serial.println(current_positions[0] / STEPS_PER_MM);
+    else if (strcmp(param1, "y") == 0)    Serial.println(current_positions[1] / STEPS_PER_MM);
+    else if (strcmp(param1, "z") == 0)    Serial.println(current_positions[2] / STEPS_PER_MM);
   } else if (strcmp(command, "findhome") == 0) {
     findHome();
   } else if (strcmp(command, "sethome") == 0) {
@@ -88,9 +94,14 @@ void loop() {
   readString = "";
 }
 
-void setXYZ(float x, float y, float z){
+void setXY(float x, float y){
   current_positions[0] = x;
   current_positions[1] = y;
+  steppers.moveTo(current_positions);
+  steppers.runSpeedToPosition();
+}
+
+void setZ(float z){
   current_positions[2] = z;
   steppers.moveTo(current_positions);
   steppers.runSpeedToPosition();
@@ -106,7 +117,9 @@ void findHome() {
   // Set the current position to the home position
   setHome();
   // Slow down the steppers to get better accuracy
-  setSpeedandAcceleration(100,100);
+  setSpeedandAcceleration(stepperX, 100,100);
+  setSpeedandAcceleration(stepperY, 100,100);
+  setSpeedandAcceleration(stepperZ, 100,50);
 
   // Move until all axis are pressing the limit switch
   while (digitalRead(LIMIT_X) || digitalRead(LIMIT_Y) || digitalRead(LIMIT_Z)) { 
@@ -131,15 +144,19 @@ void findHome() {
   }
   
   setHome();
+  // Set the speed and acceleration to their previous values
+  setSpeedandAcceleration(stepperX, XY_SPEED, XY_ACCEL);
+  setSpeedandAcceleration(stepperY, XY_SPEED, XY_ACCEL);
+  setSpeedandAcceleration(stepperZ, Z_SPEED, Z_ACCEL);
 }
 
-void setSpeedandAcceleration(int speed, int acceleration) {
-  stepperX.setMaxSpeed(speed);
-  stepperX.setAcceleration(acceleration);
-  stepperY.setMaxSpeed(speed);
-  stepperY.setAcceleration(acceleration);
-  stepperZ.setMaxSpeed(speed);
-  stepperZ.setAcceleration(acceleration);
+/**
+ * Set the speed and acceleration of the
+ * given stepper.
+ */
+void setSpeedandAcceleration(AccelStepper stepper, int speed, int acceleration) {
+  stepper.setMaxSpeed(speed);
+  stepper.setAcceleration(acceleration);
 }
 
 /**

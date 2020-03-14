@@ -75,34 +75,39 @@ def get_live_frame(cam, exposure):
 # To use an XYZ controller other than micro-manager,
 # change the following lines to fit your stages
 ####################################################
-import MMCorePy
+import serial
 
-def get_stage_controller(cfg="../../config/scope_stage2.cfg"):
+def get_stage_controller(COM_port):
     ''' Gets an instance of the stage controller (micro-manager).
     This function can be changed to return other python controllers.
     '''
-    mmc = MMCorePy.CMMCore()
-    mmc.loadSystemConfiguration(cfg)
-    mmc.setFocusDevice('FocusDrive')
-    return mmc
+    return serial.Serial(COM_port, 9600, timeout=5)
 
 def get_x_pos(stage_controller):
-    return stage_controller.getXPosition()
+    message = "get x".encode()
+    stage_controller.write(message)
+    return float(stage_controller.readline())
 
 def get_y_pos(stage_controller):
-    return stage_controller.getYPosition()
+    message = "get y".encode()
+    stage_controller.write(message)
+    return float(stage_controller.readline())
 
 def get_z_pos(stage_controller):
-    return stage_controller.getPosition()
+    message = "get z".encode()
+    stage_controller.write(message)
+    return float(stage_controller.readline())
 
 def set_xy_pos(stage_controller, x, y):
-    return stage_controller.setXYPosition(x, y)
+    stage_controller.write("moveXY "+str(x)+" "+str(y))
+    return stage_controller.readline()
 
 def set_z_pos(stage_controller, z):
-    return stage_controller.setPosition(z)
+    stage_controller.write("moveZ "+str(z))
+    return stage_controller.readline()
 
 def wait_for_system(stage_controller):
-    return stage_controller.waitForSystem()
+    pass
  
 # LED and Shutter Control
 # Uncomment the following lines for manual control and be sure to comment 
