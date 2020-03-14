@@ -298,7 +298,7 @@ class Main(tk.Frame):
         ######################################################
         # Get Stage Controller
         ######################################################
-        self.mmc = sc_utils.get_stage_controller(os.path.join(os.path.dirname(sys.argv[0]),"../../config/scope_stage2.cfg"))
+        self.mmc = sc_utils.get_stage_controller("COM7")
 
     def toggle_stage_direction(self):
         # stage = self.mmc.getXYStageDevice()
@@ -609,7 +609,7 @@ class Live_Camera:
             self.last_channel = self.channel.get()
 
         frame = self.vid.get_frame(self.exp)
-        frame = cv2.resize(frame, self.dim, interpolation=cv2.INTER_AREA)
+        frame = cv2.resize(frame, self.dim)#, interpolation=cv2.INTER_AREA)
         # img8 = (frame/4).astype('uint8')
         frame = PIL.Image.fromarray(frame)
         self.photo = PIL.ImageTk.PhotoImage(image=frame)
@@ -631,9 +631,8 @@ class VideoCapture:
         self.cam = sc_utils.start_cam()
 
     def get_frame(self, exposure):
-        frame = self.cam.get_frame(exp_time=exposure).reshape(
-            self.cam.sensor_size[::-1])
-        frame = np.flipud(frame)
+        frame = sc_utils.get_live_frame(self.cam, 1)
+        # frame = np.flipud(frame)
         frame = sc_utils.bytescale(frame, high=255)
         return frame
 

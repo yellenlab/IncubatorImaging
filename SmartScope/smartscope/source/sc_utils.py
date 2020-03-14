@@ -11,8 +11,9 @@ Written by Caleb Sanford
 ####################################################
 # Change these lines to import different camera package
 ####################################################
-from pyvcam import pvc
-from pyvcam.camera import Camera
+import cv2
+import numpy as np
+import subprocess
 
 def start_cam():
     ''' Initializes the PVCAM
@@ -20,14 +21,10 @@ def start_cam():
     returns: cam instance
     '''
     try:
-        pvc.init_pvcam()
-        cam = next(Camera.detect_camera())
-        cam.open()
-        cam.clear_mode = 'Never'
-        cam.exp_mode = "Ext Trig Trig First"
-        cam.readout_port = 0
-        cam.speed_table_index = 0
-        cam.gain = 1
+        cam = cv2.VideoCapture(0)
+        if cam.isOpened(): # try to get the first frame
+            rval, frame =  cam.read()
+        subprocess.call(['DN_DS_Ctrl.exe', 'AXILevel', '6'])
     except:
         raise RuntimeError('Could not start Camera')
     return cam
@@ -37,9 +34,10 @@ def get_frame_size():
     returns a tuple (<image pixel width>, <image pixel height>)
     '''
     cam = start_cam()
-    shape = cam.shape
+    rval, frame = cam.read()
+    height, width, _ = frame.shape
     close_cam(cam)
-    return shape
+    return (width, height)
 
 def close_cam(cam):
     ''' Closes the PVCAM instance
@@ -47,15 +45,14 @@ def close_cam(cam):
         - camera instance 
     '''
     try:
-        cam.close()
-        pvc.uninit_pvcam()
+        cam.release()
     except:
         print_error('Could not close Camera')
 
 def get_frame(exposure):
     ''' Gets a frame from the camera '''
     cam = start_cam()
-    frame = cam.get_frame(exp_time=exposure)
+    _, frame = cam.read()
     close_cam(cam)
     return frame
 
@@ -69,7 +66,8 @@ def get_live_frame(cam, exposure):
         - exposure: exposure time
 
     '''
-    return cam.get_frame(exp_time=exposure)
+    _, frame = cam.read()
+    return frame
 
 ####################################################
 # To use an XYZ controller other than micro-manager,
@@ -121,21 +119,23 @@ def change_LED_values(controller, LED, value):
 '''
 # AUTO CONTROL FUNCTIONS
 def change_shutter(controller, value):
-    controller.setProperty('IL-Turret', 'State', value)
+    # controller.setProperty('IL-Turret', 'State', value)
+    pass
     
 def change_LED_values(controller, LED, value):
     # if controller.getProperty('Thorlabs DC4100', 'Operation Mode') != 'Brightness Mode':
     #     print ( controller.getProperty('Thorlabs DC4100', 'Operation Mode'))
     #     controller.setProperty('Thorlabs DC4100', 'Operation Mode', 'Brightness Mode')
-    port = controller.getProperty('Thorlabs DC4100', 'Port')
-    if value != 0:
-        on_off = "1"
-        controller.setProperty('Thorlabs DC4100', 'Percental Brightness LED-'+str(LED), value)
-        controller.setSerialPortCommand(port, bytearray.fromhex("4F203" + str(LED-1) + "203" + on_off + "0A453F0A").decode(), "")
-    else:
-        on_off = "0"
-        controller.setSerialPortCommand(port, bytearray.fromhex("4F203" + str(LED-1) + "203" + on_off + "0A453F0A").decode(), "")
-        controller.setProperty('Thorlabs DC4100', 'Percental Brightness LED-'+str(LED), value)
+    # port = controller.getProperty('Thorlabs DC4100', 'Port')
+    # if value != 0:
+    #     on_off = "1"
+    #     controller.setProperty('Thorlabs DC4100', 'Percental Brightness LED-'+str(LED), value)
+    #     controller.setSerialPortCommand(port, bytearray.fromhex("4F203" + str(LED-1) + "203" + on_off + "0A453F0A").decode(), "")
+    # else:
+    #     on_off = "0"
+    #     controller.setSerialPortCommand(port, bytearray.fromhex("4F203" + str(LED-1) + "203" + on_off + "0A453F0A").decode(), "")
+    #     controller.setProperty('Thorlabs DC4100', 'Percental Brightness LED-'+str(LED), value)
+    pass
 #################################################################
 
 def set_LEDs_off(controller):

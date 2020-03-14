@@ -133,8 +133,8 @@ class VideoCapture:
         self.cam = sc_utils.start_cam()
 
     def get_frame(self, exposure):
-        frame = self.cam.get_frame(exp_time=exposure).reshape(self.cam.sensor_size[::-1])
-        frame = np.flipud(frame)
+        frame = sc_utils.get_live_frame(self.cam, 1)
+        # frame = np.flipud(frame)
         frame = sc_utils.bytescale(frame, high=255)
         return frame
 
@@ -242,7 +242,7 @@ class ExpParmas:
                             Entry_Option(self.master, 'Camera Pixel Width',self.get_default(26)),
                             Entry_Option(self.master, 'Camera Pixel Height',self.get_default(27))]
          
-        self.mmc = sc_utils.get_stage_controller()
+        self.mmc = sc_utils.get_stage_controller('COM7')
         self.setup_window()
  
     def setup_window(self):
