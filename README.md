@@ -1,2 +1,4 @@
 # IncubatorImaging
-Spring 2020 Independent Study Duke ECE
+Caleb Sanford's Spring 2020 Independent Study. Duke ECE
+
+For imaging multiple chips inside the incubator. 
